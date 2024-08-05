@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot Mini App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .coins, .timer {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #friendsContainer, #taskContainer {
+            display: none;
+            margin-top: 20px;
+        }
+        #friendsList, #taskList {
+            list-style: none;
+            padding: 0;
+        }
+        .taskItem {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="welcomeMessage">Welcome, <span id="userName">User</span>!</h1>
+        <div class="coins">Coins: <span id="coinCount">0</span></div>
+        <div class="timer" id="timer">Time left: 8:00:00</div>
+        <button id="startButton" onclick="startMining()">Start Mining</button>
+        <div>
+            <button onclick="showMenu('Friends')">Friends</button>
+            <button onclick="showMenu('Task')">Task</button>
+            <button onclick="showMenu('Wallet')">Wallet</button>
+        </div>
+        <div id="menu" style="display:none;">
+            <button onclick="backToMain()">Back</button>
+            <div id="friendsContainer">
+                <p>Invite your friends with the link below:</p>
+                <input type="text" value="https://example.com/invite?ref=user123" id="inviteLink" readonly>
+                <button onclick="shareInvite()">Invite</button>
+                <h3>Joined Friends:</h3>
+                <ul id="friendsList"></ul>
+            </div>
+            <div id="taskContainer">
+                <h3>Tasks</h3>
+                <ul id="taskList">
+                    <li class="taskItem"><span>Join Facebook</span><button onclick="completeTask(this)">Complete</button></li>
+                    <li class="taskItem"><span>Follow on Twitter</span><button onclick="completeTask(this)">Complete</button></li>
+                    <li class="taskItem"><span>Follow on Instagram</span><button onclick="completeTask(this)">Complete</button></li>
+                    <li class="taskItem"><span>Subscribe on YouTube</span><button onclick="completeTask(this)">Complete</button></li>
+                    <li class="taskItem"><span>Join Telegram Channel</span><button onclick="completeTask(this)">Complete</button></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let coins = 0;
+        let miningInterval;
+        let countdownInterval;
+        const miningDuration = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+        // Simulate getting the Telegram username (in a real app, you'd get this from the server or the Telegram API)
+        const telegramUsername = "@telegram_user";
+
+        document.getElementById('userName').innerText = telegramUsername;
+
+        function startMining() {
+            const startButton = document.getElementById('startButton');
+            startButton.disabled = true;
+            startButton.innerText = 'Started';
+            const endTime = Date.now() + miningDuration;
+
+            miningInterval = setInterval(() => {
+                coins += 1;
+                document.getElementById('coinCount').innerText = coins;
+            }, 1000);
+
+            countdownInterval = setInterval(() => {
+                const remainingTime = endTime - Date.now();
+                if (remainingTime <= 0) {
+                    clearInterval(miningInterval);
+                    clearInterval(countdownInterval);
+                    startButton.disabled = false;
+                    startButton.innerText = 'Start Mining';
+                    document.getElementById('timer').innerText = "Time left: 0:00:00";
+                } else {
+                    const hours = Math.floor(remainingTime / (1000 * 60 * 60));
+                    const minutes = Math.floor((remainingTime % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingTime % (1000 * 60)) / 1000);
+                    document.getElementById('timer').innerText = `Time left: ${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        function showMenu(menu) {
+            document.getElementById('menu').style.display = 'block';
+            document.querySelector('.container > div:nth-child(5)').style.display = 'none';
+
+            if (menu === 'Friends') {
+                document.getElementById('friendsContainer').style.display = 'block';
+                document.getElementById('taskContainer').style.display = 'none';
+            } else if (menu === 'Task') {
+                document.getElementById('friendsContainer').style.display = 'none';
+                document.getElementById('taskContainer').style.display = 'block';
+            } else {
+                alert(menu);
+            }
+        }
+
+        function backToMain() {
+            document.getElementById('menu').style.display = 'none';
+            document.querySelector('.container > div:nth-child(5)').style.display = 'block';
+            document.getElementById('friendsContainer').style.display = 'none';
+            document.getElementById('taskContainer').style.display = 'none';
+        }
+
+        function shareInvite() {
+            const inviteLink = document.getElementById('inviteLink').value;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Invite to Telegram Bot Mini App',
+                    text: 'Join me in this awesome app!',
+                    url: inviteLink
+                }).then(() => {
+                    console.log('Thanks for sharing!');
+                }).catch(err => {
+                    console.error('Error sharing:', err);
+                });
+            } else {
+                alert('Your browser does not support the Web Share API.');
+            }
+        }
+
+        function completeTask(button) {
+            const taskItem = button.parentElement;
+            taskItem.classList.add('completed');
+            button.disabled = true;
+            button.innerText = 'Completed';
+            coins += 500;
+            document.getElementById('coinCount').innerText = coins;
+        }
+
+        // Simulate a friend joining through the invite link (this would normally be handled by a server)
+        function simulateFriendJoin(name, coins) {
+            const friendsList = document.getElementById('friendsList');
+            const listItem = document.createElement('li');
+            listItem.textContent = `${name} - Coins: ${coins}`;
+            friendsList.appendChild(listItem);
+        }
+
+        // Simulate friends joining (this would be dynamically updated in a real app)
+        setTimeout(() => simulateFriendJoin('Alice', 10), 5000); // Simulate Alice joining after 5 seconds
+        setTimeout(() => simulateFriendJoin('Bob', 20), 10000); // Simulate Bob joining after 10 seconds
+    </script>
+</body>
+</html>
